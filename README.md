@@ -1,2 +1,2 @@
-Epay adapter for omnipay
+ePay adapter for omnipay
 ========================
