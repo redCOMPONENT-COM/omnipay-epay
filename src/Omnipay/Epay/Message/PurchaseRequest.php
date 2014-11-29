@@ -50,7 +50,7 @@ class PurchaseRequest extends AbstractRequest
 
     public function getData()
     {
-        $this->validate('merchantnumber', 'currency', 'accepturl', 'amount', 'secret');
+        $this->validate('merchantnumber', 'currency', 'accepturl', 'amount');
 
         $data = array();
         foreach($this->getSupportedKeys() as $key) {
@@ -60,8 +60,10 @@ class PurchaseRequest extends AbstractRequest
             }
         }
 
-        unset($data['secret']);
-        $data['hash'] = md5(implode("", array_values($data)) . $this->getParameter('secret'));
+        if (isset($data['secret'])) {
+            unset($data['secret']);
+            $data['hash'] = md5(implode("", array_values($data)) . $this->getParameter('secret'));
+        }
 
         return $data;
     }

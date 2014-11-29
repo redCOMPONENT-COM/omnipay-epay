@@ -12,7 +12,7 @@ class CompletePurchaseRequest extends PurchaseRequest
 {
     public function getData()
     {
-        if(!$this->verifyHash($this->httpRequest->query->all())) {
+        if($this->getParameter('secret') && !$this->verifyHash($this->httpRequest->query->all())) {
             throw new InvalidResponseException('Invalid key');
         }
 
