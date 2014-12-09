@@ -60,6 +60,10 @@ class Gateway extends AbstractGateway
         $this->parameters->set('windowstate', $windowstate);
     }
 
+    public function setWindowid($windowId) {
+        $this->parameters->set('windowid', $windowId);
+    }
+
     public function purchase(array $parameters = array())
     {
         return $this->createRequest('\Omnipay\Epay\Message\PurchaseRequest', $parameters);
