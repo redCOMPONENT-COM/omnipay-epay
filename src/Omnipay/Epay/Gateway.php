@@ -31,7 +31,8 @@ class Gateway extends AbstractGateway
             'ownreceipt' => '1',
             'timeout'    => '',
             'paymentcollection' => '1',
-            'lockpaymentcollection' => '1'
+            'lockpaymentcollection' => '1',
+            'windowid' => '1'
         );
     }
 
