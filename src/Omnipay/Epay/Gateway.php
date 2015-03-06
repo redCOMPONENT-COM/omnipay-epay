@@ -5,6 +5,7 @@ namespace Omnipay\Epay;
 use Omnipay\Common\AbstractGateway;
 use Omnipay\Epay\Message\CaptureRequest;
 use Omnipay\Epay\Message\CompletePurchaseRequest;
+use Omnipay\Epay\Message\DeleteRequest;
 use Omnipay\Epay\Message\PurchaseRequest;
 use Omnipay\Epay\Message\RefundRequest;
 
@@ -96,4 +97,14 @@ class Gateway extends AbstractGateway
     {
         return $this->createRequest('\Omnipay\Epay\Message\RefundRequest', $parameters);
     }
+
+    /**
+     * @param array $parameters
+     * @return DeleteRequest
+     */
+    public function delete(array $parameters = array())
+    {
+        return $this->createRequest('\Omnipay\Epay\Message\DeleteRequest', $parameters);
+    }
+
 }
