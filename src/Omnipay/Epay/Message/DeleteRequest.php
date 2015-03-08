@@ -11,9 +11,14 @@ class DeleteRequest extends CaptureRequest
 {
     protected $endpoint = 'https://ssl.ditonlinebetalingssystem.dk/remote/payment.asmx';
 
+    public function getSupportedKeys() {
+
+        return ['merchantnumber', 'transactionid', 'group'];
+    }
+
     public function getData()
     {
-        $this->validate('merchantnumber', 'transactionid', 'group');
+        $this->validate('merchantnumber', 'transactionid');
 
         $data = array();
         foreach($this->getSupportedKeys() as $key) {
