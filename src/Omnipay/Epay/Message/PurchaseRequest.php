@@ -55,7 +55,7 @@ class PurchaseRequest extends AbstractRequest
         $data = array();
         foreach($this->getSupportedKeys() as $key) {
             $value = $this->parameters->get($key);
-            if (!empty($value)) {
+            if ($value !== null) {
                 $data[$key] = $value;
             }
         }
