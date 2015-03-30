@@ -44,7 +44,7 @@ class Gateway extends AbstractGateway
 
     public function setMerchantnumber($merchantNumber)
     {
-        $this->parameters->set('merchantnumber', $merchantNumber);
+        $this->parameters->set('merchantnumber', (string) $merchantNumber);
     }
 
     public function setSecret($secret)
