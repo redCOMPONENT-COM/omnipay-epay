@@ -12,25 +12,15 @@ namespace Omnipay\Epay\Message;
 use Omnipay\Common\Message\ResponseInterface;
 
 /**
- * ePay Capture Request
+ * ePay Check Request
  *
  * @package     Redpayment
  * @subpackage  omnipay.epay
  * @since       1.5
  */
-class CaptureRequest extends PurchaseRequest
+class CheckRequest extends PurchaseRequest
 {
 	protected $endpoint = 'https://ssl.ditonlinebetalingssystem.dk/remote/payment.asmx';
-
-	/**
-	 * Returns list of needed parameters for the request
-	 *
-	 * @return array
-	 */
-	public function getSupportedParameters()
-	{
-		return array('merchantnumber', 'amount', 'transactionId', 'group', 'pwd');
-	}
 
 	/**
 	 * Get the raw data array for this message. The format of this varies from gateway to
@@ -40,8 +30,7 @@ class CaptureRequest extends PurchaseRequest
 	 */
 	public function getData()
 	{
-		$this->validate('merchantnumber', 'amount', 'transactionId');
-
+		$this->validate('merchantnumber', 'transactionId');
 		$data = array();
 
 		foreach ($this->getSupportedParameters() as $key)
@@ -55,7 +44,6 @@ class CaptureRequest extends PurchaseRequest
 		}
 
 		$data['transactionid'] = $this->getTransactionId();
-		$data['amount'] = $this->getAmountInteger();
 		$data['pbsResponse'] = -1;
 		$data['epayresponse'] = -1;
 
@@ -63,25 +51,34 @@ class CaptureRequest extends PurchaseRequest
 	}
 
 	/**
-	 * Send the request with specified data
+	 * Send data
 	 *
-	 * @param   mixed  $data  The data to send
+	 * @param   mixed  $data  Data
 	 *
-	 * @return CaptureResponse
+	 * @return CheckResponse
 	 */
 	public function sendData($data)
 	{
 		$client = new \SoapClient($this->endpoint . '?WSDL');
-		$result = $client->capture($data);
+		$result = $client->gettransaction($data);
 
-		return $this->response = new CaptureResponse(
-			$this,
-			array(
-				'captureResult' => $result->captureResult,
-				'pbsresponsecode' => $result->pbsResponse,
-				'epayresponsecode' => $result->epayresponse,
-			)
+		$response = array(
+			'gettransactionResult' => $result->gettransactionResult,
+			'pbsresponsecode' => $result->pbsResponse,
+			'epayresponsecode' => $result->epayresponse,
+			'currency' => '',
+			'capturedamount' => '',
+			'status' => '',
 		);
+
+		if (isset($result->transactionInformation))
+		{
+			$response['currency'] = $result->transactionInformation->currency;
+			$response['capturedamount'] = $result->transactionInformation->capturedamount;
+			$response['status'] = $result->transactionInformation->status;
+		}
+
+		return $this->response = new CheckResponse($this, $response);
 	}
 
 	/**

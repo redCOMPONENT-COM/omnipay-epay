@@ -1,64 +1,97 @@
 <?php
+/**
+ * @package     Redpayment
+ * @subpackage  omnipay
+ *
+ * @copyright   Copyright (C) 2008 - 2015 redCOMPONENT.com. All rights reserved.
+ * @license     GNU General Public License version 2 or later, see LICENSE.
+ */
 
 namespace Omnipay\Epay\Message;
 
 use Omnipay\Common\Message\ResponseInterface;
 
 /**
- * Epay Refund Request
+ * ePay Delete Request
+ *
+ * @package     Redpayment
+ * @subpackage  omnipay.epay
+ * @since       1.5
  */
 class DeleteRequest extends CaptureRequest
 {
-    protected $endpoint = 'https://ssl.ditonlinebetalingssystem.dk/remote/payment.asmx';
+	protected $endpoint = 'https://ssl.ditonlinebetalingssystem.dk/remote/payment.asmx';
 
-    public function getSupportedKeys() {
+	/**
+	 * Returns list of needed parameters for the request
+	 *
+	 * @return array
+	 */
+	public function getSupportedParameters()
+	{
+		return array('merchantnumber', 'transactionId', 'group', 'pwd');
+	}
 
-        return ['merchantnumber', 'transactionid', 'group'];
-    }
+	/**
+	 * Get the raw data array for this message. The format of this varies from gateway to
+	 * gateway, but will usually be either an associative array, or a SimpleXMLElement.
+	 *
+	 * @return mixed
+	 */
+	public function getData()
+	{
+		$this->validate('merchantnumber', 'transactionId');
+		$data = array();
 
-    public function getData()
-    {
-        $this->validate('merchantnumber', 'transactionid');
+		foreach ($this->getSupportedParameters() as $key)
+		{
+			$value = $this->parameters->get($key);
 
-        $data = array();
-        foreach($this->getSupportedKeys() as $key) {
-            $value = $this->parameters->get($key);
-            if (!empty($value)) {
-                $data[$key] = $value;
-            }
-        }
+			if (!is_null($value))
+			{
+				$data[$key] = $value;
+			}
+		}
 
-        /** Hack from SOAP description */
-        $data['pbsresponse'] = -1;
-        $data['epayresponse'] = -1;
+		$data['transactionid'] = $this->getTransactionId();
+		$data['pbsresponse'] = -1;
+		$data['epayresponse'] = -1;
 
-        return $data;
-    }
+		return $data;
+	}
 
-    /**
-     * @param mixed $data
-     * @return CaptureResponse
-     */
-    public function sendData($data)
-    {
-        $client = new \SoapClient($this->endpoint.'?WSDL');
-        $result = $client->delete($data);
+	/**
+	 * Send the request with specified data
+	 *
+	 * @param   mixed  $data  The data to send
+	 *
+	 * @return DeleteResponse
+	 */
+	public function sendData($data)
+	{
+		$client = new \SoapClient($this->endpoint . '?WSDL');
+		$result = $client->delete($data);
 
+		// If we get this error code then this transaction is already deleted
+		$deleteResult = $result->epayresponse == -1020;
 
-        return $this->response = new RefundResponse($this, array(
-            'creditResult' => $result->creditResult,
-            'pbsResponse' => $result->pbsresponse,
-            'epayresponse' => $result->epayresponse,
-        ));
-    }
+		return $this->response = new DeleteResponse(
+			$this,
+			array(
+				'deleteResult' => $deleteResult ? $deleteResult : $result->deleteResult,
+				'pbsresponsecode' => $result->pbsresponse,
+				'epayresponsecode' => $result->epayresponse,
+			)
+		);
+	}
 
-    /**
-     * Send the request
-     *
-     * @return ResponseInterface
-     */
-    public function send()
-    {
-        return $this->sendData($this->getData());
-    }
+	/**
+	 * Send the request
+	 *
+	 * @return ResponseInterface
+	 */
+	public function send()
+	{
+		return $this->sendData($this->getData());
+	}
 }
