@@ -1,4 +1,11 @@
 <?php
+/**
+ * @package     Redpayment
+ * @subpackage  omnipay
+ *
+ * @copyright   Copyright (C) 2008 - 2015 redCOMPONENT.com. All rights reserved.
+ * @license     GNU General Public License version 2 or later, see LICENSE.
+ */
 
 namespace Omnipay\Epay\Message;
 
@@ -8,78 +15,126 @@ use Omnipay\Common\Exception\RuntimeException;
 use Omnipay\Common\Message\ResponseInterface;
 use Symfony\Component\HttpFoundation\ParameterBag;
 
-
 /**
- * Epay Purchase Request
+ * ePay Purchase Request
+ *
+ * @package     Redpayment
+ * @subpackage  omnipay.epay
+ * @since       1.5
  */
 class PurchaseRequest extends AbstractRequest
 {
-    /**
-     * @inheritdoc
-     */
-    public function initialize(array $parameters = array())
-    {
-        if (null !== $this->response) {
-            throw new RuntimeException('Request cannot be modified after it has been sent!');
-        }
+	/**
+	 * Initialize the object with parameters.
+	 * If any unknown parameters passed, they will be ignored.
+	 *
+	 * @param   array  $parameters  An associative array of parameters
+	 *
+	 * @return $this
+	 *
+	 * @throws RuntimeException
+	 */
+	public function initialize(array $parameters = array())
+	{
+		if ($this->response !== null)
+		{
+			throw new RuntimeException('Request cannot be modified after it has been sent!');
+		}
 
-        $this->parameters = new ParameterBag();
-        $supportedKeys = $this->getSupportedKeys();
-        if (is_array($parameters)) {
-            foreach ($parameters as $key => $value) {
-                $method = 'set'.ucfirst(Helper::camelCase($key));
-                if (method_exists($this, $method)) {
-                    $this->$method($value);
-                } else if(in_array($key, $supportedKeys)) {
-                    $this->parameters->set($key, $value);
-                }
-            }
-        }
+		$this->parameters = new ParameterBag;
+		$supportedKeys = $this->getSupportedParameters();
 
-        return $this;
-    }
+		if (is_array($parameters))
+		{
+			foreach ($parameters as $key => $value)
+			{
+				$method = 'set' . ucfirst(Helper::camelCase($key));
 
-    public function getSupportedKeys() {
+				if (method_exists($this, $method))
+				{
+					$this->$method($value);
+				}
+				elseif (in_array($key, $supportedKeys))
+				{
+					$this->parameters->set($key, $value);
+				}
+			}
+		}
 
-        return ['merchantnumber', 'currency','amount', 'secret', 'orderid', 'windowstate', 'mobile', 'windowid',
-            'paymentcollection', 'lockpaymentcollection', 'paymenttype', 'language', 'encoding', 'cssurl', 'mobilecssurl',
-            'instantcapture', 'splitpayment', 'instantcallback', 'callbackurl', 'accepturl', 'cancelurl', 'ownreceipt',
-            'ordertext', 'group', 'description', 'subscription', 'subscriptionname', 'mailreceipt', 'googletracker',
-            'backgroundcolor', 'opacity', 'declinetext', 'iframeheight', 'iframewidth', 'timeout'];
-    }
+		return $this;
+	}
 
-    public function getData()
-    {
-        $this->validate('merchantnumber', 'currency', 'accepturl', 'amount');
+	/**
+	 * Returns list of needed parameters for the request
+	 *
+	 * @return array
+	 */
+	public function getSupportedParameters()
+	{
+		return array('merchantnumber', 'currency','amount', 'secret', 'orderid', 'windowstate', 'mobile', 'windowid',
+			'paymentcollection', 'lockpaymentcollection', 'paymenttype', 'language', 'encoding', 'cssurl', 'mobilecssurl',
+			'instantcapture', 'splitpayment', 'instantcallback', 'callbackurl', 'accepturl', 'cancelurl', 'ownreceipt',
+			'ordertext', 'group', 'description', 'subscription', 'subscriptionname', 'mailreceipt', 'googletracker',
+			'backgroundcolor', 'opacity', 'declinetext', 'iframeheight', 'iframewidth', 'timeout', 'epayresponsecode',
+			'pbsresponsecode', 'pwd');
+	}
 
-        $data = array();
-        foreach($this->getSupportedKeys() as $key) {
-            $value = $this->parameters->get($key);
-            if ($value !== null) {
-                $data[$key] = $value;
-            }
-        }
+	/**
+	 * Get the raw data array for this message. The format of this varies from gateway to
+	 * gateway, but will usually be either an associative array, or a SimpleXMLElement.
+	 *
+	 * @return mixed
+	 */
+	public function getData()
+	{
+		$this->validate('merchantnumber', 'currency', 'amount');
+		$data = array();
 
-        if (isset($data['secret'])) {
-            unset($data['secret']);
-            $data['hash'] = md5(implode("", array_values($data)) . $this->getParameter('secret'));
-        }
+		foreach ($this->getSupportedParameters() as $key)
+		{
+			$value = $this->parameters->get($key);
 
-        return $data;
-    }
+			if ($value !== null)
+			{
+				$data[$key] = $value;
+			}
+		}
 
-    public function sendData($data)
-    {
-        return $this->response = new PurchaseResponse($this, $data);
-    }
+		$data['amount'] = $this->getAmountInteger();
 
-    /**
-     * Send the request
-     *
-     * @return ResponseInterface
-     */
-    public function send()
-    {
-        return $this->sendData($this->getData());
-    }
+		if (empty($data['accepturl']))
+		{
+			$data['accepturl'] = $this->getNotifyUrl();
+		}
+
+		if (isset($data['secret']))
+		{
+			unset($data['secret']);
+			$data['hash'] = md5(implode("", array_values($data)) . $this->getParameter('secret'));
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Send the request with specified data
+	 *
+	 * @param   mixed  $data  The data to send
+	 *
+	 * @return PurchaseResponse
+	 */
+	public function sendData($data)
+	{
+		return $this->response = new PurchaseResponse($this, $data);
+	}
+
+	/**
+	 * Send the request
+	 *
+	 * @return ResponseInterface
+	 */
+	public function send()
+	{
+		return $this->sendData($this->getData());
+	}
 }

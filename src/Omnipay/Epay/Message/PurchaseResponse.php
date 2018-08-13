@@ -1,4 +1,11 @@
 <?php
+/**
+ * @package     Redpayment
+ * @subpackage  omnipay
+ *
+ * @copyright   Copyright (C) 2008 - 2015 redCOMPONENT.com. All rights reserved.
+ * @license     GNU General Public License version 2 or later, see LICENSE.
+ */
 
 namespace Omnipay\Epay\Message;
 
@@ -6,34 +13,63 @@ use Omnipay\Common\Message\AbstractResponse;
 use Omnipay\Common\Message\RedirectResponseInterface;
 
 /**
- * Epay Purchase Response
+ * ePay Purchase Response
+ *
+ * @package     Redpayment
+ * @subpackage  omnipay.epay
+ * @since       1.5
  */
 class PurchaseResponse extends AbstractResponse implements RedirectResponseInterface
 {
-    protected $endpoint = 'https://ssl.ditonlinebetalingssystem.dk/integration/ewindow/Default.aspx';
+	protected $endpoint = 'https://ssl.ditonlinebetalingssystem.dk/integration/ewindow/Default.aspx';
 
-    public function isSuccessful()
-    {
-        return false;
-    }
+	/**
+	 * Is the response successful?
+	 *
+	 * @return boolean
+	 */
+	public function isSuccessful()
+	{
+		return false;
+	}
 
-    public function isRedirect()
-    {
-        return true;
-    }
+	/**
+	 * Does the response require a redirect?
+	 *
+	 * @return boolean
+	 */
+	public function isRedirect()
+	{
+		return true;
+	}
 
-    public function getRedirectUrl()
-    {
-        return $this->endpoint.'?'.http_build_query($this->data);
-    }
+	/**
+	 * Gets the redirect target url.
+	 *
+	 * @return string
+	 */
+	public function getRedirectUrl()
+	{
+		return $this->endpoint . '?' . http_build_query($this->data);
+	}
 
-    public function getRedirectMethod()
-    {
-        return 'GET';
-    }
+	/**
+	 * Get the required redirect method (either GET or POST).
+	 *
+	 * @return string
+	 */
+	public function getRedirectMethod()
+	{
+		return 'GET';
+	}
 
-    public function getRedirectData()
-    {
-        return null;
-    }
+	/**
+	 * Gets the redirect form data array, if the redirect method is POST.
+	 *
+	 * @return mixed
+	 */
+	public function getRedirectData()
+	{
+		return null;
+	}
 }

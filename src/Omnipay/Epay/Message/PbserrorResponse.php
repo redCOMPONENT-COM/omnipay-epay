@@ -12,13 +12,13 @@ namespace Omnipay\Epay\Message;
 use Omnipay\Common\Message\AbstractResponse;
 
 /**
- * ePay Delete Response
+ * ePay Pbserror Response
  *
  * @package     Redpayment
  * @subpackage  omnipay.epay
  * @since       1.5
  */
-class DeleteResponse extends AbstractResponse
+class PbserrorResponse extends AbstractResponse
 {
 	/**
 	 * Is the response successful?
@@ -29,6 +29,6 @@ class DeleteResponse extends AbstractResponse
 	{
 		$data = $this->getData();
 
-		return isset($data['deleteResult']) && $data['deleteResult'];
+		return !empty($data['getPbsErrorResult']);
 	}
 }

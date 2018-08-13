@@ -12,25 +12,15 @@ namespace Omnipay\Epay\Message;
 use Omnipay\Common\Message\ResponseInterface;
 
 /**
- * ePay Capture Request
+ * ePay Pbserror Request
  *
  * @package     Redpayment
  * @subpackage  omnipay.epay
  * @since       1.5
  */
-class CaptureRequest extends PurchaseRequest
+class PbserrorRequest extends PurchaseRequest
 {
 	protected $endpoint = 'https://ssl.ditonlinebetalingssystem.dk/remote/payment.asmx';
-
-	/**
-	 * Returns list of needed parameters for the request
-	 *
-	 * @return array
-	 */
-	public function getSupportedParameters()
-	{
-		return array('merchantnumber', 'amount', 'transactionId', 'group', 'pwd');
-	}
 
 	/**
 	 * Get the raw data array for this message. The format of this varies from gateway to
@@ -40,8 +30,7 @@ class CaptureRequest extends PurchaseRequest
 	 */
 	public function getData()
 	{
-		$this->validate('merchantnumber', 'amount', 'transactionId');
-
+		$this->validate('merchantnumber', 'pbsresponsecode');
 		$data = array();
 
 		foreach ($this->getSupportedParameters() as $key)
@@ -54,8 +43,7 @@ class CaptureRequest extends PurchaseRequest
 			}
 		}
 
-		$data['transactionid'] = $this->getTransactionId();
-		$data['amount'] = $this->getAmountInteger();
+		$data['language'] = empty($data['language']) ? 2 : $data['language'];
 		$data['pbsResponse'] = -1;
 		$data['epayresponse'] = -1;
 
@@ -67,19 +55,18 @@ class CaptureRequest extends PurchaseRequest
 	 *
 	 * @param   mixed  $data  The data to send
 	 *
-	 * @return CaptureResponse
+	 * @return PbserrorResponse
 	 */
 	public function sendData($data)
 	{
 		$client = new \SoapClient($this->endpoint . '?WSDL');
-		$result = $client->capture($data);
+		$result = $client->getPbsError($data);
 
-		return $this->response = new CaptureResponse(
+		return $this->response = new PbserrorResponse(
 			$this,
 			array(
-				'captureResult' => $result->captureResult,
-				'pbsresponsecode' => $result->pbsResponse,
-				'epayresponsecode' => $result->epayresponse,
+				'getEpayErrorResult' => isset($result->getPbsErrorResult) ? $result->getPbsErrorResult : null,
+				'epayresponsestring' => isset($result->getPbsErrorResult) ? $result->pbsresponsestring : '',
 			)
 		);
 	}
